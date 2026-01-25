@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>오사카 여행 메이트</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* --- CSS 스타일 --- */
+        * { box-sizing: border-box; outline: none; }
+        body { margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; overflow: hidden; height: 100vh; background: #fff; }
+
+        /* 1. 지도 영역 */
+        #map-container { width: 100%; height: 65%; transition: height 0.4s ease; position: relative; z-index: 1; }
+        iframe { width: 100%; height: 100%; border: none; }
+        .my-location-btn {
+            position: absolute; bottom: 20px; right: 20px;
+            background: white; border-radius: 50%; width: 50px; height: 50px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: #333; cursor: pointer; z-index: 10;
+        }
+
+        /* 2. 시간표 영역 */
+        #schedule-container {
+            width: 100%; height: 35%; background: white;
+            border-radius: 25px 25px 0 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
+            position: absolute; bottom: 0; transition: height 0.4s ease;
+            z-index: 20; display: flex; flex-direction: column;
+        }
+        .schedule-header { padding: 15px 25px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .schedule-title { font-size: 18px; font-weight: bold; color: #333; }
+        .expand-btn { font-size: 13px; color: #007bff; background: #f0f7ff; padding: 5px 12px; border-radius: 15px; border: none; cursor: pointer; }
+        
+        .schedule-list { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 80px; }
+        
+        /* 날짜 섹션 */
+        .date-section { margin-bottom: 25px; }
+        .date-header { 
+            background: #f8f9fa; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; 
+            display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee;
+        }
+        .date-picker { border: none; background: transparent; font-size: 16px; font-weight: bold; color: #333; font-family: inherit; cursor: pointer; }
+        .delete-date-btn { color: #ff4757; font-size: 11px; cursor: pointer; background: white; padding: 4px 8px; border-radius: 6px; border: 1px solid #ff4757; }
+
+        /* ▼▼▼ 수정된 부분: 시간표 디자인 최적화 ▼▼▼ */
+        .time-slot { 
+            display: flex; 
+            align-items: center; 
+            margin-bottom: 12px; 
+            gap: 5px; 
+            background: white;
+        }
+        
+        /* 시간 범위 박스 (타이트하게 조절) */
+        .time-range-box {
+            display: flex; 
+            align-items: center; 
+            gap: 2px;
+            flex-shrink: 0; /* 시간표는 줄어들지 않음 */
+        }
+        /* 시간 입력창: 너비 90px 확보 + 폰트 조절로 '오후' 떠도 안 잘리게 함 */
+        .time-picker {
+            border: 1px solid #ddd; border-radius: 6px; 
+            padding: 0; /* 내부 여백 제거 */
+            font-size: 12px; /* 글자 크기 살짝 줄여서 공간 확보 */
+            color: #333; background: #fff; font-family: inherit;
+            width: 90px; /* 너비 충분히 확보 */
+            height: 32px; /* 높이 고정 */
+            text-align: center; font-weight: 500;
+            letter-spacing: -0.5px; /* 자간 좁혀서 내용 다 보이게 */
+        }
+        .tilde { font-weight: bold; color: #ccc; margin: 0 1px; font-size: 12px;}
+
+        /* 일정 텍스트 입력 */
+        .event-wrapper { display: flex; align-items: center; flex: 1; min-width: 0; }
+        .event-input { 
+            background: #f9f9f9; padding: 0 10px; border-radius: 8px; width: 100%; height: 32px;
+            border: 1px solid #eee; font-size: 14px; 
+        }
+        
+        /* 버튼 그룹 (위/아래/삭제) */
+        .btn-group {
+            display: flex; align-items: center; gap: 0; margin-left: 3px; flex-shrink: 0;
+        }
+        .control-btn {
+            color: #aaa; cursor: pointer; padding: 8px 6px; font-size: 13px;
+        }
+        .control-btn:hover { color: #555; }
+        .delete-btn { color: #ffabaf; margin-left: 2px; }
+        /* ▲▲▲ 수정 끝 ▲▲▲ */
+
+        .add-event-btn { width: 100%; padding: 10px; border: 2px dashed #eee; border-radius: 10px; color: #aaa; background: white; margin-top: 5px; cursor: pointer; font-size: 14px; }
+        .add-date-float-btn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 30px; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; z-index: 30; }
+
+        .checklist-fab { position: fixed; top: 80px; right: 20px; width: 45px; height: 45px; background-color: #ff4757; border-radius: 50%; box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4); display: flex; align-items: center; justify-content: center; color: white; font-size: 22px; z-index: 100; cursor: pointer; border: none; }
+
+        #checklist-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 85%; max-width: 400px; height: 70%; border-radius: 20px; padding: 25px; position: relative; display: flex; flex-direction: column; }
+        .check-input-area { display: flex; gap: 10px; margin-bottom: 20px; }
+        .check-input-area input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .check-input-area button { padding: 10px 15px; background: #ff4757; color: white; border: none; border-radius: 8px; }
+        .check-list-box { flex: 1; overflow-y: auto; }
+        .check-item { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+        .check-left { display: flex; align-items: center; flex: 1; }
+        .check-item input[type="checkbox"] { transform: scale(1.3); margin-right: 12px; }
+        .check-del { color: #ddd; padding: 5px; }
+    </style>
+</head>
+<body>
+
+    <button class="checklist-fab" onclick="toggleModal()"><i class="fas fa-check"></i></button>
+
+    <div id="map-container">
+        <iframe src="https://www.google.com/maps/d/u/0/embed?mid=1AItyBmYPOxmXzIvjD4X4MmCJsbpDEww&usp=sharing" allow="geolocation"></iframe>
+        <div class="my-location-btn" onclick="getLocation()"><i class="fas fa-crosshairs"></i></div>
+    </div>
+
+    <div id="schedule-container">
+        <div class="schedule-header" onclick="toggleSchedule()">
+            <span class="schedule-title">📅 여행 일정</span>
+            <button class="expand-btn" id="expand-text">자세히 보기</button>
+        </div>
+        <div class="schedule-list" id="schedule-list-area"></div>
+        <div class="add-date-float-btn" onclick="addDate()">+ 날짜 추가</div>
+    </div>
+
+    <div id="checklist-modal">
+        <div class="modal-content">
+            <span style="position:absolute; top:15px; right:20px; font-size:24px; color:#aaa; cursor:pointer;" onclick="toggleModal()">×</span>
+            <h2>✅ 준비물</h2>
+            <div class="check-input-area">
+                <input type="text" id="new-check-input" placeholder="준비물 입력...">
+                <button onclick="addCheckItem()">추가</button>
+            </div>
+            <div class="check-list-box" id="check-list-area"></div>
+        </div>
+    </div>
+
+    <script>
+        let scheduleData = JSON.parse(localStorage.getItem('osaka_schedule')) || [
+            { id: 1, date: "2026-01-27", events: [{ startTime: "07:00", endTime: "08:00", text: "공항 도착" }] }
+        ];
+        let checkData = JSON.parse(localStorage.getItem('osaka_checklist')) || [{ text: "여권", checked: false }];
+
+        function saveData() {
+            localStorage.setItem('osaka_schedule', JSON.stringify(scheduleData));
+            localStorage.setItem('osaka_checklist', JSON.stringify(checkData));
+            renderAll();
+        }
+
+        function renderAll() {
+            const sArea = document.getElementById('schedule-list-area'); sArea.innerHTML = "";
+            
+            scheduleData.forEach((day, dIndex) => {
+                let eventsHtml = "";
+                day.events.forEach((evt, eIndex) => {
+                    const sTime = evt.startTime || evt.time || "09:00";
+                    const eTime = evt.endTime || "10:00";
+                    
+                    eventsHtml += `
+                        <div class="time-slot">
+                            <div class="time-range-box">
+                                <input type="time" class="time-picker" step="300" value="${sTime}" onchange="updateEvent(${dIndex}, ${eIndex}, 'startTime', this.value)">
+                                <span class="tilde">~</span>
+                                <input type="time" class="time-picker" step="300" value="${eTime}" onchange="updateEvent(${dIndex}, ${eIndex}, 'endTime', this.value)">
+                            </div>
+                            <div class="event-wrapper">
+                                <input class="event-input" value="${evt.text}" placeholder="일정" onchange="updateEvent(${dIndex}, ${eIndex}, 'text', this.value)">
+                            </div>
+                            <div class="btn-group">
+                                <i class="fas fa-chevron-up control-btn" onclick="moveEvent(${dIndex}, ${eIndex}, -1)"></i>
+                                <i class="fas fa-chevron-down control-btn" onclick="moveEvent(${dIndex}, ${eIndex}, 1)"></i>
+                                <i class="fas fa-times control-btn delete-btn" onclick="deleteEvent(${dIndex}, ${eIndex})"></i>
+                            </div>
+                        </div>`;
+                });
+
+                sArea.innerHTML += `
+                    <div class="date-section">
+                        <div class="date-header">
+                            <input type="date" class="date-picker" value="${day.date}" onchange="updateDateTitle(${dIndex}, this.value)">
+                            <span class="delete-date-btn" onclick="deleteDate(${dIndex})">날짜 삭제</span>
+                        </div>
+                        ${eventsHtml}
+                        <button class="add-event-btn" onclick="addEvent(${dIndex})">+ 일정 추가</button>
+                    </div>`;
+            });
+
+            const cArea = document.getElementById('check-list-area'); cArea.innerHTML = "";
+            checkData.forEach((item, index) => {
+                cArea.innerHTML += `<div class="check-item"><div class="check-left"><input type="checkbox" ${item.checked ? "checked" : ""} onchange="toggleCheck(${index})"><label style="${item.checked ? 'text-decoration:line-through; color:#ccc' : ''}">${item.text}</label></div><i class="fas fa-trash check-del" onclick="deleteCheck(${index})"></i></div>`;
+            });
+        }
+
+        function addDate() { const today = new Date().toISOString().substring(0, 10); scheduleData.push({ id: Date.now(), date: today, events: [] }); saveData(); }
+        function deleteDate(index) { if(confirm("이 날짜를 삭제할까요?")) { scheduleData.splice(index, 1); saveData(); }}
+        function updateDateTitle(index, val) { scheduleData[index].date = val; saveData(); }
+        function addEvent(dIndex) { scheduleData[dIndex].events.push({ startTime: "12:00", endTime: "13:00", text: "" }); saveData(); }
+        function deleteEvent(dIndex, eIndex) { scheduleData[dIndex].events.splice(eIndex, 1); saveData(); }
+        function updateEvent(dIndex, eIndex, key, val) { scheduleData[dIndex].events[eIndex][key] = val; saveData(); }
+        
+        function moveEvent(dIndex, eIndex, direction) {
+            const events = scheduleData[dIndex].events;
+            if (direction === -1 && eIndex > 0) { [events[eIndex], events[eIndex - 1]] = [events[eIndex - 1], events[eIndex]]; saveData(); }
+            else if (direction === 1 && eIndex < events.length - 1) { [events[eIndex], events[eIndex + 1]] = [events[eIndex + 1], events[eIndex]]; saveData(); }
+        }
+
+        function addCheckItem() { const input = document.getElementById('new-check-input'); if (input.value.trim() === "") return; checkData.push({ text: input.value, checked: false }); input.value = ""; saveData(); }
+        function deleteCheck(index) { checkData.splice(index, 1); saveData(); }
+        function toggleCheck(index) { checkData[index].checked = !checkData[index].checked; saveData(); }
+        let isExpanded = false;
+        function toggleSchedule() {
+            const mapBox = document.getElementById('map-container'); const scheduleBox = document.getElementById('schedule-container'); const btnText = document.getElementById('expand-text');
+            if (!isExpanded) { mapBox.style.height = "35%"; scheduleBox.style.height = "65%"; btnText.innerText = "접기"; } else { mapBox.style.height = "65%"; scheduleBox.style.height = "35%"; btnText.innerText = "자세히 보기"; }
+            isExpanded = !isExpanded;
+        }
+        function toggleModal() { const modal = document.getElementById('checklist-modal'); modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex'; }
+        function getLocation() { if (navigator.geolocation) { alert("현재 위치를 확인합니다."); navigator.geolocation.getCurrentPosition(pos => { window.open(`https://www.google.com/maps/search/?api=1&query=${pos.coords.latitude},${pos.coords.longitude}`); }); }}
+        renderAll();
+    </script>
+</body>
+</html>
