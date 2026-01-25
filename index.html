@@ -44,32 +44,17 @@
         .date-picker { border: none; background: transparent; font-size: 16px; font-weight: bold; color: #333; font-family: inherit; cursor: pointer; }
         .delete-date-btn { color: #ff4757; font-size: 11px; cursor: pointer; background: white; padding: 4px 8px; border-radius: 6px; border: 1px solid #ff4757; }
 
-        /* ▼▼▼ 수정된 부분: 시간표 디자인 최적화 ▼▼▼ */
+        /* 시간표 스타일 (24시간제/오후 표시 대응) */
         .time-slot { 
-            display: flex; 
-            align-items: center; 
-            margin-bottom: 12px; 
-            gap: 5px; 
-            background: white;
+            display: flex; align-items: center; margin-bottom: 12px; gap: 5px; background: white;
         }
-        
-        /* 시간 범위 박스 (타이트하게 조절) */
         .time-range-box {
-            display: flex; 
-            align-items: center; 
-            gap: 2px;
-            flex-shrink: 0; /* 시간표는 줄어들지 않음 */
+            display: flex; align-items: center; gap: 2px; flex-shrink: 0; 
         }
-        /* 시간 입력창: 너비 90px 확보 + 폰트 조절로 '오후' 떠도 안 잘리게 함 */
         .time-picker {
-            border: 1px solid #ddd; border-radius: 6px; 
-            padding: 0; /* 내부 여백 제거 */
-            font-size: 12px; /* 글자 크기 살짝 줄여서 공간 확보 */
-            color: #333; background: #fff; font-family: inherit;
-            width: 90px; /* 너비 충분히 확보 */
-            height: 32px; /* 높이 고정 */
-            text-align: center; font-weight: 500;
-            letter-spacing: -0.5px; /* 자간 좁혀서 내용 다 보이게 */
+            border: 1px solid #ddd; border-radius: 6px; padding: 0; 
+            font-size: 12px; color: #333; background: #fff; font-family: inherit;
+            width: 90px; height: 32px; text-align: center; font-weight: 500; letter-spacing: -0.5px;
         }
         .tilde { font-weight: bold; color: #ccc; margin: 0 1px; font-size: 12px;}
 
@@ -81,15 +66,10 @@
         }
         
         /* 버튼 그룹 (위/아래/삭제) */
-        .btn-group {
-            display: flex; align-items: center; gap: 0; margin-left: 3px; flex-shrink: 0;
-        }
-        .control-btn {
-            color: #aaa; cursor: pointer; padding: 8px 6px; font-size: 13px;
-        }
+        .btn-group { display: flex; align-items: center; gap: 0; margin-left: 3px; flex-shrink: 0; }
+        .control-btn { color: #aaa; cursor: pointer; padding: 8px 6px; font-size: 13px; }
         .control-btn:hover { color: #555; }
         .delete-btn { color: #ffabaf; margin-left: 2px; }
-        /* ▲▲▲ 수정 끝 ▲▲▲ */
 
         .add-event-btn { width: 100%; padding: 10px; border: 2px dashed #eee; border-radius: 10px; color: #aaa; background: white; margin-top: 5px; cursor: pointer; font-size: 14px; }
         .add-date-float-btn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 30px; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; z-index: 30; }
@@ -139,10 +119,70 @@
     </div>
 
     <script>
-        let scheduleData = JSON.parse(localStorage.getItem('osaka_schedule')) || [
-            { id: 1, date: "2026-01-27", events: [{ startTime: "07:00", endTime: "08:00", text: "공항 도착" }] }
+        // ▼▼▼ 여기에 지민님의 오사카 전체 일정을 넣어뒀습니다! ▼▼▼
+        const defaultSchedule = [
+            {
+                id: 1, date: "2026-01-27",
+                events: [
+                    { startTime: "14:25", endTime: "15:55", text: "✈️ 대구공항 → 간사이공항 (KIX)" },
+                    { startTime: "16:20", endTime: "17:40", text: "🏨 숙소(BON 호스텔) 이동 (¥970)" },
+                    { startTime: "18:15", endTime: "18:30", text: "🚃 도톤보리로 이동 (¥190)" },
+                    { startTime: "18:30", endTime: "19:30", text: "🍜 저녁 식사 (도톤보리)" },
+                    { startTime: "19:30", endTime: "22:30", text: "🚶 글리코상 & 신사이바시 구경" },
+                    { startTime: "22:30", endTime: "23:00", text: "🏠 숙소 복귀 (¥190)" }
+                ]
+            },
+            {
+                id: 2, date: "2026-01-28",
+                events: [
+                    { startTime: "09:30", endTime: "10:00", text: "🏯 오사카성 이동 (¥240)" },
+                    { startTime: "10:00", endTime: "12:30", text: "📸 오사카성 관람 (¥1400)" },
+                    { startTime: "12:30", endTime: "14:00", text: "🍱 점심 (조-테라스 오사카)" },
+                    { startTime: "14:00", endTime: "14:30", text: "🚃 덴덴타운 이동 (¥240)" },
+                    { startTime: "14:30", endTime: "17:30", text: "🤖 덴덴타운 굿즈샵 투어" },
+                    { startTime: "17:30", endTime: "18:00", text: "🚶 신세카이로 이동" },
+                    { startTime: "18:00", endTime: "20:30", text: "🍢 신세카이 저녁 & 구경" },
+                    { startTime: "20:30", endTime: "21:00", text: "🏠 숙소 복귀 (도보)" }
+                ]
+            },
+            {
+                id: 3, date: "2026-01-29",
+                events: [
+                    { startTime: "08:30", endTime: "09:45", text: "🚆 교토 가와라마치 이동 (¥650)" },
+                    { startTime: "10:00", endTime: "12:00", text: "🍡 니시키 시장 & 점심" },
+                    { startTime: "12:00", endTime: "14:00", text: "🛍️ 테라마치 & 신쿄고쿠 상점가" },
+                    { startTime: "14:00", endTime: "17:00", text: "⛩️ 가모강, 기온, 야사카 신사" },
+                    { startTime: "17:00", endTime: "18:30", text: "🚆 우메다로 복귀 (¥410)" },
+                    { startTime: "18:30", endTime: "21:30", text: "🌃 우메다 야경 & 저녁" },
+                    { startTime: "21:30", endTime: "22:00", text: "🏠 숙소 복귀 (¥240)" }
+                ]
+            },
+            {
+                id: 4, date: "2026-01-30",
+                events: [
+                    { startTime: "09:30", endTime: "10:00", text: "🛅 체크아웃 & 코인라커 (¥890)" },
+                    { startTime: "10:00", endTime: "14:00", text: "🛍️ 덴덴타운 쇼핑 & 점심" },
+                    { startTime: "14:00", endTime: "16:00", text: "🏢 난바 파크스/백화점 쇼핑" },
+                    { startTime: "16:30", endTime: "17:00", text: "🎒 짐 찾기 -> 난카이 난바역" },
+                    { startTime: "17:00", endTime: "18:00", text: "🚆 공항 이동 (¥970)" },
+                    { startTime: "18:00", endTime: "19:00", text: "✈️ 출국 수속" }
+                ]
+            }
         ];
-        let checkData = JSON.parse(localStorage.getItem('osaka_checklist')) || [{ text: "여권", checked: false }];
+
+        // 기본 체크리스트
+        const defaultChecklist = [
+            { text: "여권 챙기기 (유효기간 확인)", checked: false },
+            { text: "110V 돼지코 어댑터", checked: false },
+            { text: "Visit Japan Web 캡처", checked: false },
+            { text: "숙소(BON Hostel) 바우처", checked: false },
+            { text: "동전 지갑", checked: false },
+            { text: "보조 배터리", checked: false }
+        ];
+
+        // 저장된 게 없으면 위에서 만든 기본 데이터를 씁니다!
+        let scheduleData = JSON.parse(localStorage.getItem('osaka_schedule')) || defaultSchedule;
+        let checkData = JSON.parse(localStorage.getItem('osaka_checklist')) || defaultChecklist;
 
         function saveData() {
             localStorage.setItem('osaka_schedule', JSON.stringify(scheduleData));
@@ -210,6 +250,7 @@
         function addCheckItem() { const input = document.getElementById('new-check-input'); if (input.value.trim() === "") return; checkData.push({ text: input.value, checked: false }); input.value = ""; saveData(); }
         function deleteCheck(index) { checkData.splice(index, 1); saveData(); }
         function toggleCheck(index) { checkData[index].checked = !checkData[index].checked; saveData(); }
+        
         let isExpanded = false;
         function toggleSchedule() {
             const mapBox = document.getElementById('map-container'); const scheduleBox = document.getElementById('schedule-container'); const btnText = document.getElementById('expand-text');
@@ -218,6 +259,8 @@
         }
         function toggleModal() { const modal = document.getElementById('checklist-modal'); modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex'; }
         function getLocation() { if (navigator.geolocation) { alert("현재 위치를 확인합니다."); navigator.geolocation.getCurrentPosition(pos => { window.open(`https://www.google.com/maps/search/?api=1&query=${pos.coords.latitude},${pos.coords.longitude}`); }); }}
+        
+        // 처음 켜면 렌더링
         renderAll();
     </script>
 </body>
