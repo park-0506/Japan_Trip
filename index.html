@@ -33,67 +33,44 @@
         .schedule-title { font-size: 18px; font-weight: bold; color: #333; }
         .expand-btn { font-size: 13px; color: #007bff; background: #f0f7ff; padding: 5px 12px; border-radius: 15px; border: none; cursor: pointer; }
         
-        .schedule-list { flex: 1; overflow-y: auto; padding: 0; /* 패딩 제거 (배경색 꽉 채우기 위함) */ padding-bottom: 80px; }
+        .schedule-list { flex: 1; overflow-y: auto; padding: 0; padding-bottom: 80px; }
         
-        /* ▼▼▼ 날짜 섹션 디자인 수정 (격일 배경색) ▼▼▼ */
-        .date-section { 
-            padding: 25px 20px; /* 내부 여백 넉넉하게 */
-            border-bottom: 1px solid #eee;
-        }
-        
-        /* 홀수 번째 날짜 (1일차, 3일차...) : 회색 배경 */
-        .date-section:nth-child(odd) {
-            background-color: #f2f4f6; 
-        }
-        /* 짝수 번째 날짜 (2일차, 4일차...) : 흰색 배경 */
-        .date-section:nth-child(even) {
-            background-color: #ffffff;
-        }
+        /* 날짜 섹션 (격일 배경) */
+        .date-section { padding: 25px 20px; border-bottom: 1px solid #eee; }
+        .date-section:nth-child(odd) { background-color: #f2f4f6; }
+        .date-section:nth-child(even) { background-color: #ffffff; }
 
-        .date-header { 
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; 
-        }
+        .date-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .date-picker { border: none; background: transparent; font-size: 18px; font-weight: 800; color: #333; font-family: inherit; cursor: pointer; }
         .delete-date-btn { color: #ff4757; font-size: 12px; cursor: pointer; background: white; padding: 5px 10px; border-radius: 15px; border: 1px solid #ff4757; }
 
         /* 시간표 아이템 */
-        .time-slot { 
-            display: flex; flex-direction: column; margin-bottom: 15px; 
-            background: transparent; /* 배경 투명 (부모 색 따라감) */
-        }
+        .time-slot { display: flex; flex-direction: column; margin-bottom: 15px; }
         
         /* 1줄: 시간 + 버튼 */
-        .time-row {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
-        }
+        .time-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         .time-range-box { display: flex; align-items: center; gap: 2px; }
         .time-picker {
             border: 1px solid #ddd; border-radius: 6px; padding: 0; 
-            font-size: 13px; color: #333; 
-            background: #fff; /* 입력창은 항상 흰색 */
+            font-size: 13px; color: #333; background: #fff;
             width: 90px; height: 30px; text-align: center; font-weight: 600; letter-spacing: -0.5px;
         }
         .tilde { font-weight: bold; color: #aaa; margin: 0 4px; font-size: 12px;}
 
-        /* 버튼 그룹 */
         .btn-group { display: flex; align-items: center; gap: 5px; }
         .control-btn { 
             color: #888; cursor: pointer; padding: 5px; font-size: 14px; 
             width: 26px; height: 26px; text-align: center;
-            background: #fff; /* 버튼 배경 흰색 */
-            border: 1px solid #ddd; border-radius: 4px;
+            background: #fff; border: 1px solid #ddd; border-radius: 4px;
         }
         .control-btn:hover { background: #eee; color: #333; }
         .delete-btn { color: #ff4757; border-color: #ffcccc; background: #fff5f5; }
 
-        /* 2줄: 내용 입력 (흰색 배경으로 통일) */
+        /* 2줄: 내용 입력 */
         .event-input { 
-            background: #ffffff; /* 흰색 배경 */
-            padding: 10px 12px; border-radius: 8px; width: 100%; height: 42px;
-            border: 1px solid #ddd; font-size: 15px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* 살짝 그림자 */
+            background: #ffffff; padding: 10px 12px; border-radius: 8px; width: 100%; height: 42px;
+            border: 1px solid #ddd; font-size: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        /* ▲▲▲ 디자인 수정 끝 ▲▲▲ */
 
         .add-event-btn { width: 100%; padding: 12px; border: 2px dashed #ccc; border-radius: 10px; color: #888; background: rgba(255,255,255,0.5); margin-top: 5px; cursor: pointer; font-size: 14px; font-weight: bold; }
         .add-date-float-btn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 30px; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; z-index: 30; }
@@ -143,7 +120,7 @@
     </div>
 
     <script>
-        // ▼▼▼ 전체 일정 데이터 (하드코딩 유지) ▼▼▼
+        // 기본 데이터 (하드코딩)
         const defaultSchedule = [
             {
                 id: 1, date: "2026-01-27",
@@ -203,13 +180,17 @@
             { text: "보조 배터리", checked: false }
         ];
 
-        // 저장소 키 유지 (_final)
-        let scheduleData = JSON.parse(localStorage.getItem('osaka_schedule_final')) || defaultSchedule;
-        let checkData = JSON.parse(localStorage.getItem('osaka_checklist_final')) || defaultChecklist;
+        // 🚨 중요: 키 이름을 '_v2'로 바꿔서 빈 데이터 문제를 해결!
+        // 그리고 저장된게 있더라도(saved), 길이가 0이면(빈 배열이면) 무조건 defaultSchedule을 씁니다.
+        let savedSchedule = JSON.parse(localStorage.getItem('osaka_schedule_v2'));
+        let scheduleData = (savedSchedule && savedSchedule.length > 0) ? savedSchedule : defaultSchedule;
+
+        let savedChecklist = JSON.parse(localStorage.getItem('osaka_checklist_v2'));
+        let checkData = (savedChecklist && savedChecklist.length > 0) ? savedChecklist : defaultChecklist;
 
         function saveData() {
-            localStorage.setItem('osaka_schedule_final', JSON.stringify(scheduleData));
-            localStorage.setItem('osaka_checklist_final', JSON.stringify(checkData));
+            localStorage.setItem('osaka_schedule_v2', JSON.stringify(scheduleData));
+            localStorage.setItem('osaka_checklist_v2', JSON.stringify(checkData));
             renderAll();
         }
 
@@ -266,4 +247,22 @@
         function moveEvent(dIndex, eIndex, direction) {
             const events = scheduleData[dIndex].events;
             if (direction === -1 && eIndex > 0) { [events[eIndex], events[eIndex - 1]] = [events[eIndex - 1], events[eIndex]]; saveData(); }
-            else if (direction ===
+            else if (direction === 1 && eIndex < events.length - 1) { [events[eIndex], events[eIndex + 1]] = [events[eIndex + 1], events[eIndex]]; saveData(); }
+        }
+        function addCheckItem() { const input = document.getElementById('new-check-input'); if (input.value.trim() === "") return; checkData.push({ text: input.value, checked: false }); input.value = ""; saveData(); }
+        function deleteCheck(index) { checkData.splice(index, 1); saveData(); }
+        function toggleCheck(index) { checkData[index].checked = !checkData[index].checked; saveData(); }
+        
+        let isExpanded = false;
+        function toggleSchedule() {
+            const mapBox = document.getElementById('map-container'); const scheduleBox = document.getElementById('schedule-container'); const btnText = document.getElementById('expand-text');
+            if (!isExpanded) { mapBox.style.height = "35%"; scheduleBox.style.height = "65%"; btnText.innerText = "접기"; } else { mapBox.style.height = "65%"; scheduleBox.style.height = "35%"; btnText.innerText = "자세히 보기"; }
+            isExpanded = !isExpanded;
+        }
+        function toggleModal() { const modal = document.getElementById('checklist-modal'); modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex'; }
+        function getLocation() { if (navigator.geolocation) { alert("현재 위치를 확인합니다."); navigator.geolocation.getCurrentPosition(pos => { window.open(`https://www.google.com/maps/search/?api=1&query=${pos.coords.latitude},${pos.coords.longitude}`); }); }}
+        
+        renderAll();
+    </script>
+</body>
+</html>
