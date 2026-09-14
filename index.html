@@ -185,7 +185,7 @@
             { text: "보조 배터리", checked: false }
         ];
 
-        // 🚨 중요: 키 이름을 '_v3'로 업데이트!
+        // 중요: 키 이름을 '_v3'로 업데이트!
         // 이렇게 하면 이전 데이터(_v2)를 무시하고 무조건 새 데이터를 불러옵니다.
         let savedSchedule = JSON.parse(localStorage.getItem('osaka_schedule_v3'));
         let scheduleData = (savedSchedule && savedSchedule.length > 0) ? savedSchedule : defaultSchedule;
